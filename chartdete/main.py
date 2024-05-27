@@ -1,5 +1,9 @@
 """
 This script extracts data from plots using LineFormer and ChartDete.
+
+If you have not used modal before, you can set up an account here: modal.com
+
+Run this script using: modal run chartdete/main.py
 """
 
 from pathlib import Path
@@ -9,10 +13,10 @@ import modal
 app = App("extract_data_from_plot")
 SECRET_NAME = ""
 
-plot_extr_image = (  # TODO finish this (maybe build a docker image and use that here?)
+plot_extr_image = (
     Image.debian_slim(python_version="3.8")
     .apt_install("git")
-    .run_commands("git clone https://github.com/tdsone/LineFormer.git")
+    .run_commands("git clone https://github.com/pengyu965/ChartDete.git")
     .pip_install(
         "openmim",
         "chardet",
