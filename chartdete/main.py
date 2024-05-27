@@ -7,6 +7,7 @@ from modal import Image, App
 import modal
 
 app = App("extract_data_from_plot")
+SECRET_NAME = ""
 
 plot_extr_image = (  # TODO finish this (maybe build a docker image and use that here?)
     Image.debian_slim(python_version="3.8")
@@ -34,7 +35,7 @@ plot_extr_image = (  # TODO finish this (maybe build a docker image and use that
     image=plot_extr_image,
     timeout=3000,
     gpu="any",
-    secrets=[modal.Secret.from_name("gcp-twig")],
+    secrets=[modal.Secret.from_name(SECRET_NAME)],
 )
 def extract_data_from_plot(plot_jpg: str, bucket_name: str):
     # download image from google cloud
