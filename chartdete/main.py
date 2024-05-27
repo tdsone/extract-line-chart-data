@@ -1,9 +1,13 @@
 """
 This script extracts data from plots using LineFormer and ChartDete.
 
-If you have not used modal before, you can set up an account here: modal.com
+Setup:
+- If you have not used modal before, you can set up an account here: modal.com
+- Currently the weights are not downloaded using this code.
 
 Run this script using: modal run chartdete/main.py
+
+If you struggle to set this up, don't hesitate to shoot me an email: mail@timonschneider.de
 """
 
 from pathlib import Path
