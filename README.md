@@ -2,7 +2,7 @@
 A repo that shows how to automatically extract the data of a line chart.
 
 The pipeline works as follows: 
-1. Use ChartDete to detect chart elements, most importantly axis labels and the plot area. (`chartdete.py`)
+1. Use ChartDete to detect chart elements, most importantly axis labels and the plot area. (`chartdete`)
 2. OCR the numbers from the labels. (`ocr.py`)
 3. Extract the coordinates of the lines in the line chart using LineFormer. (`lineformer.py`)
 4. Correct the coordinates of the lines to be relative to the plot origin. (`correct_coordinates.py`)
