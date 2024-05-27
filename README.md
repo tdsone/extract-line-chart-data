@@ -18,3 +18,11 @@ The pipeline works as follows:
 ### Output
 This chart was generated using matplotlib using the extracted data (`example/data.json`)
 ![Example Output](example/output.png)
+
+## Resources
+- [LineFormer](https://github.com/TheJaeLal/LineFormer)
+- [ChartDete](https://github.com/pengyu965/ChartDete/)
+
+
+# Contact
+If you need help setting this up or would just like to use it, shoot me an email: mail@timonschneider.de
