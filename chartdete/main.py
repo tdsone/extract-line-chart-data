@@ -30,17 +30,6 @@ plot_extr_image = (  # TODO finish this (maybe build a docker image and use that
     .pip_install("bresenham", "tqdm")
 )
 
-
-def extract_lines_from_plot(plot_jpg: Path) -> None:
-    """This function extracts data series in a line plot using LineFormer
-
-    Args:
-        path_to_img (Path): _description_
-    """
-    # TODO implement
-    pass
-
-
 @app.function(
     image=plot_extr_image,
     timeout=3000,
