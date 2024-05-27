@@ -17,6 +17,7 @@ plot_extr_image = (
     Image.debian_slim(python_version="3.8")
     .apt_install("git")
     .run_commands("git clone https://github.com/pengyu965/ChartDete.git")
+    .run_commands("git clone https://github.com/TheJaeLal/LineFormer.git")
     .pip_install(
         "openmim",
         "chardet",
