@@ -1,5 +1,5 @@
 # [WIP] Extract Line Chart Data
-A repo that shows how to automatically extract the data of a line chart.
+A repo that shows how to automatically extract the data of a line chart. Mainly a wrapper around [LineFormer](https://github.com/TheJaeLal/LineFormer) and [ChartDete](https://github.com/pengyu965/ChartDete/).
 
 ## Usage
 All images in the folder `input` will be processed.
