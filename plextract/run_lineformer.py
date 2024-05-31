@@ -1,37 +1,11 @@
 import os
-from plextract.modal import app, vol
+from plextract.modal import app, vol, base_cv_image
 from typing import List, Dict, Tuple, Any
 
 from modal import Image, build, enter, gpu, method, Mount
 
 
-lineformer_image = (
-    Image.debian_slim(python_version="3.10")
-    .apt_install("git")
-    .apt_install("libgl1-mesa-glx", "libglib2.0-0")
-    .run_commands("git clone https://github.com/tdsone/LineFormer.git")
-    .pip_install(
-        "openmim",
-        "chardet",
-        "torch==1.13.1",
-        "torchvision==0.14.1",
-    )
-    .run_commands("mim install mmcv-full")
-    .pip_install(
-        "scikit-image",
-        "matplotlib",
-        "opencv-python",
-        "pillow",
-        "scipy==1.9.3",
-    )
-    .run_commands("pip install -e LineFormer/mmdetection")
-    .pip_install(
-        "bresenham",
-        "tqdm",
-        "transformers~=4.38.2",
-    )
-    .run_commands("pip install -e LineFormer")
-)
+lineformer_image = base_cv_image.run_commands("pip install -e LineFormer")
 
 
 @app.cls(
@@ -41,7 +15,7 @@ lineformer_image = (
     volumes={"/predictions": vol},
     mounts=[Mount.from_local_dir("input", remote_path="/input")],
 )
-class Model:
+class LineFormer:
     @build()
     def build(self):
         from huggingface_hub import snapshot_download
@@ -79,7 +53,12 @@ class Model:
 
         predictions = []
 
-        os.makedirs(os.path.join(Path("/predictions"), Path(run_id)), exist_ok=False)
+        os.makedirs(
+            os.path.join("/predictions", run_id, "lineformer"),
+            exist_ok=True,
+        )
+
+        print(os.listdir(f"/predictions/{run_id}"))
 
         inputs = os.listdir("/input")
 
@@ -99,7 +78,8 @@ class Model:
 
                 # Construct the new path to save the image
                 new_img_path = os.path.join(
-                    Path(f"/predictions/{run_id}"), Path(img_path.split("/")[2])
+                    Path(f"/predictions/{run_id}/lineformer"),
+                    Path(img_path.split("/")[2]),
                 )
 
                 cv2.imwrite(new_img_path, img)

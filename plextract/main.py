@@ -1,6 +1,7 @@
 from modal import Mount
-from plextract.run_lineformer import Model as LineFormer
 from plextract.modal import vol, app
+from plextract.run_lineformer import LineFormer
+from plextract.run_chartdete import ChartDete
 
 
 @app.function(
@@ -14,9 +15,10 @@ def run_pipeline():
 
     print(f"Processing run {run_id}...")
 
-    predictions = LineFormer().inference.remote(run_id=run_id)
+    lineformer_preds = LineFormer().inference.remote(run_id=run_id)
+    chartdete_preds = ChartDete().inference.remote(run_id=run_id)
 
-    return predictions
+    return (lineformer_preds, chartdete_preds)
 
     # dir = Path("/tmp/stable-diffusion-xl")
     # if not dir.exists():
