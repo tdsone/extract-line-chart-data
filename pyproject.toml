@@ -1,0 +1,7 @@
+[project]
+name = "plextract"
+version = "2024.5.27"
+description = "Extract line chart data from images."
+dependencies = [ 
+   "modal"
+]

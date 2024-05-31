@@ -10,13 +10,13 @@ import modal
 
 app = modal.App("ocr")
 
-tesseract_img = modal.Image.debian_slim().pip_install(
+ocr_img = modal.Image.debian_slim().pip_install(
     "google-cloud-storage", "transformers", "pillow", "torch"
 )
 
 SECRET_NAME = ""
 
-with tesseract_img.imports():
+with ocr_img.imports():
     from google.cloud import storage
     from google.oauth2 import service_account
     from PIL import Image, ImageOps
@@ -40,7 +40,7 @@ with tesseract_img.imports():
     )
 
 
-@app.function(image=tesseract_img, secrets=[modal.Secret.from_name("gcp-twig")])
+@app.function(image=ocr_img, secrets=[modal.Secret.from_name("gcp-twig")])
 def run_ocr(blob_name):
 
     print(f"Running OCR on {blob_name}")
@@ -66,7 +66,7 @@ def run_ocr(blob_name):
     return blob_name, generated_text
 
 
-@app.function(image=tesseract_img, secrets=[modal.Secret.from_name(SECRET_NAME)])
+@app.function(image=ocr_img, secrets=[modal.Secret.from_name(SECRET_NAME)])
 def extract_text():
 
     ocrs = {}

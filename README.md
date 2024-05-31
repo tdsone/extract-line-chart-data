@@ -1,6 +1,17 @@
 # Extract Line Chart Data
 A repo that shows how to automatically extract the data of a line chart.
 
+## Usage
+All images in the folder `input` will be processed.
+1. Add your images to the `input` folder.
+2. Run the data extraction using: `modal run plextract/main.py`
+
+### Requirements
+- You need a [modal.com](https://modal.com) account to run this repo out of the box. 
+
+If you'd like to see a "modal-free" version of this, ping me.
+
+## How It Works
 The pipeline works as follows: 
 1. Use ChartDete to detect chart elements, most importantly axis labels and the plot area. (`chartdete`)
 2. OCR the numbers from the labels. (`ocr.py`)
@@ -8,7 +19,7 @@ The pipeline works as follows:
 4. Correct the coordinates of the lines to be relative to the plot origin. (`correct_coordinates.py`)
 5. Calculate the conversion from pixels to axis values. (`correct_coordinates.py`)
 6. Convert the coordinates using the conversion parameter from step before. (`correct_coordinates.py`)
-   
+ 
 
 ## Example
 
