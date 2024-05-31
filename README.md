@@ -1,4 +1,4 @@
-# Extract Line Chart Data
+# [WIP] Extract Line Chart Data
 A repo that shows how to automatically extract the data of a line chart.
 
 The pipeline works as follows: 
