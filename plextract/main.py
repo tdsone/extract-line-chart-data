@@ -2,9 +2,21 @@ from modal import Mount
 from plextract.run_lineformer import Model as LineFormer
 from plextract.modal import vol, app
 
-@app.function(volumes={"/predictions": vol}, mounts=[Mount.from_local_dir("input", remote_path="/input")])
-def run_pipeline(): 
-    predictions = LineFormer().inference.remote(img_paths=[])
+
+@app.function(
+    volumes={"/predictions": vol},
+)
+def run_pipeline():
+    import os
+    import uuid
+
+    run_id = str(uuid.uuid4())
+
+    print(f"Processing run {run_id}...")
+
+    predictions = LineFormer().inference.remote(run_id=run_id)
+
+    return predictions
 
     # dir = Path("/tmp/stable-diffusion-xl")
     # if not dir.exists():
@@ -17,6 +29,9 @@ def run_pipeline():
 
     pass
 
+
 @app.local_entrypoint()
 def main():
-    run_pipeline.remote()
+    predictions = run_pipeline.remote()
+
+    print(predictions)
