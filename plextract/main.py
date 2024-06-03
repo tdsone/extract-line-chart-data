@@ -5,8 +5,7 @@ from plextract.correct_coordinates import correct_coordinates
 
 
 @app.function(
-    volumes={"/data": vol},
-    mounts=[Mount.from_local_dir("input", remote_path="/input")]
+    volumes={"/data": vol}, mounts=[Mount.from_local_dir("input", remote_path="/input")]
 )
 def run_pipeline():
     import os
@@ -17,7 +16,7 @@ def run_pipeline():
 
     print(f"Processing run {run_id}...")
 
-    # copy mounted input to volume 
+    # copy mounted input to volume
     # (necessary as run id not known at build time)
     os.makedirs(f"/data/{run_id}/input")
 
@@ -54,16 +53,18 @@ def run_pipeline():
 
     OCRModel = Cls.lookup("plextract-ocr", "OCRModel")
 
-    label_texts = list(OCRModel().inference.map(axis_label_images, return_exceptions=True))
+    label_texts = list(
+        OCRModel().inference.map(axis_label_images, return_exceptions=True)
+    )
 
     # Save ocrred values to file
     with open(f"/data/{run_id}/predictions/ocr/label_texts.json", "w") as f:
         import json
-        json.dump({path: extracted_text for extracted_text, path in label_texts}, f)    
-        vol.commit()
-    
 
-    return (chartdete_preds)
+        json.dump({path: extracted_text for path, extracted_text in label_texts}, f)
+        vol.commit()
+
+    return chartdete_preds
 
     # dir = Path("/tmp/stable-diffusion-xl")
     # if not dir.exists():
