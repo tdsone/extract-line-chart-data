@@ -39,3 +39,9 @@ This chart was generated using matplotlib using the extracted data (`example/dat
 
 # Contact
 If you need help setting this up or would just like to use it, shoot me an email: mail@timonschneider.de
+
+# TODO
+- [ ] Don't loop over images but map them
+- [ ] Wrong keys: ![alt text](image.png)
+- [ ] key and value wrong way ![alt text](image-1.png)
+- [ ] fix correc_coordinates.py
