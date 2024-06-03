@@ -18,33 +18,6 @@ with ocr_img.imports():
     import os
     from transformers import TrOCRProcessor, VisionEncoderDecoderModel
 
-
-# @app.function(image=ocr_img, secrets=[Secret.from_name("gcp-twig")])
-# def run_ocr(blob_name):
-
-#     print(f"Running OCR on {blob_name}")
-
-#     # Download the image as a blob
-#     blob = bucket.blob(blob_name)
-#     # Download the image to a file
-#     blob.download_to_filename("/tmp/temp_image")
-
-#     # verify that the image has more than 0 bytes
-#     if os.path.getsize("/tmp/temp_image") == 0:
-#         print(f"Image is empty: {blob_name}")
-#         return
-
-#     # Open the image file
-#     image = Image.open("/tmp/temp_image")
-
-#     pixel_values = processor(image, return_tensors="pt").pixel_values
-#     generated_ids = model.generate(pixel_values)
-
-#     generated_text = processor.batch_decode(generated_ids, skip_special_tokens=True)[0]
-
-#     return blob_name, generated_text
-
-
 @app.cls(
     image=ocr_img,
     volumes={"/data": vol},
@@ -83,25 +56,3 @@ class OCRModel:
         )[0]
 
         return path, generated_text
-
-
-# @app.function()
-# def extract_text(run_id: str) -> None:
-
-#     results = list(
-#         run_ocr.map(
-#             [blob.name for blob in blobs if "plot_area" not in blob.name],
-#             return_exceptions=True,
-#         )
-#     )
-
-#     for el in results:
-#         try:
-#             blob_name, ocr = el
-#             ocrs[blob_name] = ocr
-#         except Exception as e:
-#             print(f"Error processing blob: {el}")
-
-#     # upload ocrs to gcp bucket
-#     ocr_blob = bucket.blob("ocr.json")
-#     ocr_blob.upload_from_string(json.dumps(ocrs))
