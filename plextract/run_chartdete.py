@@ -11,21 +11,21 @@ If you struggle to set this up, don't hesitate to shoot me an email: mail@timons
 """
 
 from pathlib import Path
-from modal import enter, build, Mount, method
+from modal import enter, build, Mount, App, method
 
-from plextract.modal import base_cv_image, app, vol
+from plextract.modal import base_cv_image, vol
 
 chardete_image = base_cv_image.run_commands(
     "git clone https://github.com/tdsone/ChartDete"
 ).run_commands("pip install -e ChartDete")
 
+app = App("plextract-chartdete")
 
 @app.cls(
     image=chardete_image,
     timeout=3000,
     gpu="any",
-    volumes={"/predictions": vol},
-    mounts=[Mount.from_local_dir("input", remote_path="/input")],
+    volumes={"/data": vol},
 )
 class ChartDete:
 
@@ -52,26 +52,33 @@ class ChartDete:
         self.model = init_detector(config_file, checkpoint_file, device="cuda:0")
 
     def _inference(self, run_id: str):
+        print("Running ChartDete...")
 
         from pathlib import Path
         from mmdet.apis import inference_detector
         import os
 
-        inputs = os.listdir("/input")
+        vol.reload()
 
-        img_paths = [os.path.join(Path("/input"), Path(img)) for img in inputs]
+        inputs = os.listdir(f"/data/{run_id}/input")
 
-        results_base_folder = Path(f"/predictions/{run_id}/chartdete")
+        img_paths = [os.path.join(Path(f"/data/{run_id}/input"), Path(img)) for img in inputs]
+
+        results_base_folder = Path(f"/data/{run_id}/predictions/chartdete")
 
         for img_path in img_paths:
             try:
 
                 predictions = inference_detector(self.model, img_path)
 
+                result_path = f"{results_base_folder}/{img_path.split('/')[-1]}"
+
+                print("result_path:", result_path)
+
                 self.model.show_result(
                     img_path,
                     predictions,
-                    out_file=f"{results_base_folder}/{img_path.split('/')[2]}",
+                    out_file=result_path,
                 )
 
                 vol.commit()

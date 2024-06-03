@@ -23,39 +23,76 @@ meaning of array elements: x1, y1, x2, y2, confidence
    ...
 -----------------
 
-ocr.json (Text extracted from each image)
------------------
-{
-  "00098190-6c58-1014-8ce1-bb13c4d7fce9_486947v1_fig3_1/xlabel_0.jpeg": "10",
-  "00098190-6c58-1014-8ce1-bb13c4d7fce9_486947v1_fig3_1/xlabel_1.jpeg": "5",
-  "00098190-6c58-1014-8ce1-bb13c4d7fce9_486947v1_fig3_1/xlabel_2.jpeg": "15",
------------------
 
 Inputs: 
 - all axis labels coordinates for a figure
 - all corresponding texts
 """
 
-import json
+from modal import Image
+from plextract.modal import app, vol
 
-with open("coordinates.json", "r") as f:
-    coordinates = json.load(f)
+image = Image.debian_slim()
 
-with open("ocr.json", "r") as f:
-    ocr = json.load(f)
+with image.imports():
+    import json
 
-from pprint import pprint
+    vol.reload()
+
+    """
+    coordinates.json
+    - coordinates of each annotated part on full figure image
+
+    meaning of array elements: x1, y1, x2, y2, confidence
+    ----------------
+    {
+        '<run_id>-<img_name>.jpeg':
+            {
+                'ylabel_0.jpeg': [
+                    91.9613265991211,
+                    120.58985900878906,
+                    111.07434844970703,
+                    145.89064025878906,
+                    0.9691145420074463
+                ],
+                'ylabel_1.jpeg': [
+                    93.3066177368164,
+                    214.49050903320312,
+                    110.21461486816406,
+                    239.9881591796875,
+                ],
+                ...
+    ...
+    }
+
+    """
+
+    with open("coordinates.json", "r") as f:
+        coordinates = json.load(f)
+
+    """
+    ocr.json 
+    - Text extracted from each image
+
+    {
+        "00098190-6c58-1014-8ce1-bb13c4d7fce9_486947v1_fig3_1/xlabel_0.jpeg": "10",
+        "00098190-6c58-1014-8ce1-bb13c4d7fce9_486947v1_fig3_1/xlabel_1.jpeg": "5",
+        "00098190-6c58-1014-8ce1-bb13c4d7fce9_486947v1_fig3_1/xlabel_2.jpeg": "15",
+        ...
+    }
+    """
+    with open("ocr.json", "r") as f:
+        ocr = json.load(f)
 
 
-def sort_and_check_labels(figure_img):
-    coordinates_ex = coordinates[figure_img]
+def sort_and_check_labels(img_key: str):
+
+    coordinates_ex = coordinates[img_key]
 
     files = list(coordinates_ex.keys())
 
     ocr_values = {
-        f"{figure_img.split('.')[0]}/{file}": float(
-            ocr[f"{figure_img.split('.')[0]}/{file}"]
-        )
+        f"{img_key.split('.')[0]}/{file}": float(ocr[f"{img_key.split('.')[0]}/{file}"])
         for file in files
         if "plot_area" not in file
     }
@@ -101,24 +138,32 @@ def sort_and_check_labels(figure_img):
 
 def calc_conversion(coord_val_map: dict):
     """
-     coord
-     {'xs': {'00098190-6c58-1014-8ce1-bb13c4d7fce9_486947v1_fig3_1/xlabel_3.jpeg': {'coord': [199.7735137939453,
-     597.3622436523438,
-     220.34738159179688,
-     627.3770141601562,
-     0.9575890898704529],
-    'val': 0.0},
-    ...
-    'ys': {'00098190-6c58-1014-8ce1-bb13c4d7fce9_486947v1_fig3_1/ylabel_2.jpeg': {'coord': [94.44598388671875,
-     490.62774658203125,
-     143.36465454101562,
-     520.423828125,
-     0.9801554083824158],
-    'val': 0.
-    ...
-
-     Args:
-         coord_val_map (_type_): _description_
+     coord_val_map
+     {
+        'xs': {
+            '00098190-6c58-1014-8ce1-bb13c4d7fce9_486947v1_fig3_1/xlabel_3.jpeg': {
+                'coord': [
+                    199.7735137939453,
+                    597.3622436523438,
+                    220.34738159179688,
+                    627.3770141601562,
+                    0.9575890898704529
+                ],
+                'val': 0.0
+            },
+            ...
+        'ys': {
+            '00098190-6c58-1014-8ce1-bb13c4d7fce9_486947v1_fig3_1/ylabel_2.jpeg': {
+                'coord': [
+                    94.44598388671875,
+                    490.62774658203125,
+                    143.36465454101562,
+                    520.423828125,
+                    0.9801554083824158
+                ],
+            'val': 0.1
+            ...
+    }
     """
     from scipy.stats import linregress
 
@@ -154,15 +199,10 @@ Conversions
  'y': {'slope': 3.275499693756956, 'intercept': -309.137453308719}}
 """
 
-import json
-from pprint import pprint
-import matplotlib.pyplot as plt
-
 
 def convert_data_points(conversions, img):
     # Load the coordinates and line series data
-    with open("coordinates.json", "r") as f:
-        coordinates = json.load(f)
+
     with open("line_series.json") as f:
         all_lineseries = json.load(f)
 
@@ -216,8 +256,8 @@ def convert_data_points(conversions, img):
         plt.plot(x_vals, y_vals, label=series_name)
 
     # Label the axes
-    plt.xlabel("time")
-    plt.ylabel("OD")
+    plt.xlabel("x-axis")
+    plt.ylabel("y-axis")
 
     # Add a legend
     plt.legend()
@@ -227,7 +267,9 @@ def convert_data_points(conversions, img):
     plt.savefig(plot_filename)
 
 
-def main():
+@app.function(image=image, volumes=[vol])
+def correct_coordinates():
+
     imgs = list(coordinates.keys())
     for figure_img in imgs:
         try:
@@ -237,7 +279,3 @@ def main():
         except Exception as e:
             print(f"converting {figure_img} did not work")
             print(e)
-
-
-if __name__ == "__main__":
-    main()

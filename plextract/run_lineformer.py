@@ -1,19 +1,19 @@
 import os
-from plextract.modal import app, vol, base_cv_image
+from plextract.modal import vol, base_cv_image
 from typing import List, Dict, Tuple, Any
 
-from modal import Image, build, enter, gpu, method, Mount
+from modal import Image, App, build, enter, gpu, method, Mount
 
 
 lineformer_image = base_cv_image.run_commands("pip install -e LineFormer")
 
+app = App("plextract-lineformer")
 
 @app.cls(
     gpu=gpu.A10G(),
     container_idle_timeout=240,
     image=lineformer_image,
-    volumes={"/predictions": vol},
-    mounts=[Mount.from_local_dir("input", remote_path="/input")],
+    volumes={"/data": vol},
 )
 class LineFormer:
     @build()
@@ -36,7 +36,7 @@ class LineFormer:
 
         infer.load_model(CONFIG, CKPT, DEVICE)
 
-        os.makedirs("predictions", exist_ok=True)
+        os.makedirs("/data/predictions", exist_ok=True)
 
     def _inference(self, run_id: str) -> List[Tuple[Dict[str, Any], str]]:
         """Extracts data from line chart img.
@@ -44,25 +44,29 @@ class LineFormer:
             - dict: extracted data (keys are the individual data series)
             - str: path to img with the extracted data overlaying the img
 
-        Predictions are saved under predictions/{run_id}
+        Predictions are saved under /data/{run_id}/predictions/lineformer
         """
         import cv2
         from lineformer import infer
         from lineformer import line_utils
         from pathlib import Path
+        
+        vol.reload()
 
         predictions = []
 
         os.makedirs(
-            os.path.join("/predictions", run_id, "lineformer"),
+            os.path.join(f"/data/{run_id}/predictions", "lineformer"),
             exist_ok=True,
         )
 
-        print(os.listdir(f"/predictions/{run_id}"))
+        print(f"files is in /data/{run_id}:", os.listdir(f"/data/{run_id}"))
 
-        inputs = os.listdir("/input")
+        print(os.listdir(f"/data/{run_id}/predictions"))
 
-        img_paths = [os.path.join(Path("/input"), Path(img)) for img in inputs]
+        inputs = os.listdir(f"/data/{run_id}/input")
+
+        img_paths = [os.path.join(Path(f"/data/{run_id}/input"), Path(img)) for img in inputs]
 
         for img_path in img_paths:
             try:
@@ -78,9 +82,11 @@ class LineFormer:
 
                 # Construct the new path to save the image
                 new_img_path = os.path.join(
-                    Path(f"/predictions/{run_id}/lineformer"),
-                    Path(img_path.split("/")[2]),
+                    Path(f"/data/{run_id}/predictions/lineformer"),
+                    Path(img_path.split("/")[-1]),
                 )
+
+                print("new img path", new_img_path)
 
                 cv2.imwrite(new_img_path, img)
                 vol.commit()
