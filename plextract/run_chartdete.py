@@ -105,7 +105,13 @@ class ChartDete:
                     "tick_grouping",
                 ]
                 for res, label in zip(predictions, labels):
-                    results_labelled[label] = res
+                    results_labelled[label] = res.tolist()
+
+                # save coordinates to json
+                with open(f"/data/{run_id}/predictions/chartdete/coordinates.json", "w") as f:
+                    import json
+                    json.dump(results_labelled, f)
+                    vol.commit()
 
                 import cv2
                 import numpy as np
@@ -149,6 +155,7 @@ class ChartDete:
                         ),
                         cropped_image,
                     )
+                    vol.commit()
 
                 for i, cropped_image in enumerate(cropped_y_title):
                     cv2.imwrite(
@@ -157,6 +164,7 @@ class ChartDete:
                         ),
                         cropped_image,
                     )
+                    vol.commit()
 
                 print("Cropping completed and images saved.")
             except Exception as e:

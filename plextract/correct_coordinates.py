@@ -8,88 +8,71 @@ Create pix2val.json (stores, how many value units on a plot one pixel is worth)
 }
 
 
-coordinates.json (coordinates of each annotated part on full figure image)
-meaning of array elements: x1, y1, x2, y2, confidence 
-----------------
-{'0afe53e7-6c02-1014-85b0-da2b0d88953e_538132_fig3_1.jpeg': {'ylabel_0.jpeg': [91.9613265991211,
-   120.58985900878906,
-   111.07434844970703,
-   145.89064025878906,
-   0.9691145420074463],
-  'ylabel_1.jpeg': [93.3066177368164,
-   214.49050903320312,
-   110.21461486816406,
-   239.9881591796875,
-   ...
------------------
-
 
 Inputs: 
 - all axis labels coordinates for a figure
 - all corresponding texts
 """
 
-from modal import Image
-from plextract.modal import app, vol
+import json
 
-image = Image.debian_slim()
+"""
+coordinates.json
+- coordinates of each annotated part on full figure image
 
-with image.imports():
-    import json
+meaning of array elements: x1, y1, x2, y2, confidence
+----------------
+{
+    '<run_id>-<img_name>.jpeg':
+        {
+            'ylabel_0.jpeg': [
+                91.9613265991211,
+                120.58985900878906,
+                111.07434844970703,
+                145.89064025878906,
+                0.9691145420074463
+            ],
+            'ylabel_1.jpeg': [
+                93.3066177368164,
+                214.49050903320312,
+                110.21461486816406,
+                239.9881591796875,
+            ],
+            ...
+...
+}
 
-    vol.reload()
+"""
 
-    """
-    coordinates.json
-    - coordinates of each annotated part on full figure image
 
-    meaning of array elements: x1, y1, x2, y2, confidence
-    ----------------
-    {
-        '<run_id>-<img_name>.jpeg':
-            {
-                'ylabel_0.jpeg': [
-                    91.9613265991211,
-                    120.58985900878906,
-                    111.07434844970703,
-                    145.89064025878906,
-                    0.9691145420074463
-                ],
-                'ylabel_1.jpeg': [
-                    93.3066177368164,
-                    214.49050903320312,
-                    110.21461486816406,
-                    239.9881591796875,
-                ],
-                ...
+
+"""
+ocr.json 
+- Text extracted from each image
+
+{
+    "00098190-6c58-1014-8ce1-bb13c4d7fce9_486947v1_fig3_1/xlabel_0.jpeg": "10",
+    "00098190-6c58-1014-8ce1-bb13c4d7fce9_486947v1_fig3_1/xlabel_1.jpeg": "5",
+    "00098190-6c58-1014-8ce1-bb13c4d7fce9_486947v1_fig3_1/xlabel_2.jpeg": "15",
     ...
-    }
+}
+"""
 
+
+
+def sort_and_check_labels(label_coordinates: dict, img_key):
     """
+    This function makes sure that we can use the OCRed values by sorting them twice (value and position) and comparing.
 
-    with open("coordinates.json", "r") as f:
-        coordinates = json.load(f)
-
-    """
-    ocr.json 
-    - Text extracted from each image
-
+    label_coordinates:
     {
-        "00098190-6c58-1014-8ce1-bb13c4d7fce9_486947v1_fig3_1/xlabel_0.jpeg": "10",
-        "00098190-6c58-1014-8ce1-bb13c4d7fce9_486947v1_fig3_1/xlabel_1.jpeg": "5",
-        "00098190-6c58-1014-8ce1-bb13c4d7fce9_486947v1_fig3_1/xlabel_2.jpeg": "15",
-        ...
+        
     }
+
+    img_key
     """
-    with open("ocr.json", "r") as f:
-        ocr = json.load(f)
 
-
-def sort_and_check_labels(img_key: str):
-
-    coordinates_ex = coordinates[img_key]
-
-    files = list(coordinates_ex.keys())
+    files = list(label_coordinates.keys())
 
     ocr_values = {
         f"{img_key.split('.')[0]}/{file}": float(ocr[f"{img_key.split('.')[0]}/{file}"])
@@ -106,8 +89,8 @@ def sort_and_check_labels(img_key: str):
     def get_coord_key(label_key):
         return label_key.split("/")[1]
 
-    y_coords = {k: coordinates_ex[get_coord_key(k)] for k, v in yvalues.items()}
-    x_coords = {k: coordinates_ex[get_coord_key(k)] for k, v in xvalues.items()}
+    y_coords = {k: coordinates[get_coord_key(k)] for k, v in yvalues.items()}
+    x_coords = {k: coordinates[get_coord_key(k)] for k, v in xvalues.items()}
 
     # Sort the y and x coordinates
     sorted_y_coords = sorted(
@@ -266,9 +249,13 @@ def convert_data_points(conversions, img):
     plot_filename = f"converted_datapoints/{img.split('.')[0]}/plot.png"
     plt.savefig(plot_filename)
 
+def correct_coordinates(run_id, img_key):
+    
+    with open("coordinates.json", "r") as f:
+        coordinates = json.load(f)
 
-@app.function(image=image, volumes=[vol])
-def correct_coordinates():
+    with open("ocr.json", "r") as f:
+        ocr = json.load(f)
 
     imgs = list(coordinates.keys())
     for figure_img in imgs:

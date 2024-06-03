@@ -82,7 +82,7 @@ class OCRModel:
             generated_ids, skip_special_tokens=True
         )[0]
 
-        return generated_text
+        return path, generated_text
 
 
 # @app.function()

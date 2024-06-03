@@ -1,6 +1,7 @@
 from modal import Cls, Mount
 
 from plextract.modal import vol, app
+from plextract.correct_coordinates import correct_coordinates
 
 
 @app.function(
@@ -24,8 +25,6 @@ def run_pipeline():
         shutil.copy(os.path.join("/input", file_name), f"/data/{run_id}/input")
         vol.commit()
 
-    import concurrent.futures
-
     LineFormer = Cls.lookup("plextract-lineformer", "LineFormer")
     ChartDete = Cls.lookup("plextract-chartdete", "ChartDete")
 
@@ -36,25 +35,16 @@ def run_pipeline():
 
     vol.reload()
 
-    lineformer_preds = LineFormer().inference.remote(run_id)
+    LineFormer().inference.remote(run_id)
     chartdete_preds = ChartDete().inference.remote(run_id)
-
-    # with concurrent.futures.ProcessPoolExecutor() as executor:
-    #     # Submit tasks to the executor
-    #     future1 = executor.submit(LineFormer().inference.remote, run_id)
-    #     print("Started LineFormer...")
-    #     future2 = executor.submit(ChartDete().inference.remote, run_id)
-    #     print("Started ChartDete...")
-
-    #     # Collect results
-    #     lineformer_preds = future1.result()
-    #     chartdete_preds = future2.result()
 
     # OCR text from axis labels
     vol.reload()
 
+    from pathlib import Path
+
     axis_label_images = [
-        file
+        f"/data/{run_id}/predictions/chartdete/{file}"
         for file in os.listdir(f"/data/{run_id}/predictions/chartdete")
         if "label" in file
     ]
@@ -64,9 +54,16 @@ def run_pipeline():
 
     OCRModel = Cls.lookup("plextract-ocr", "OCRModel")
 
-    label_texts = list(OCRModel().inference.map(axis_label_images))
+    label_texts = list(OCRModel().inference.map(axis_label_images, return_exceptions=True))
 
-    return (lineformer_preds, chartdete_preds)
+    # Save ocrred values to file
+    with open(f"/data/{run_id}/predictions/ocr/label_texts.json", "w") as f:
+        import json
+        json.dump({path: extracted_text for extracted_text, path in label_texts}, f)    
+        vol.commit()
+    
+
+    return (chartdete_preds)
 
     # dir = Path("/tmp/stable-diffusion-xl")
     # if not dir.exists():
