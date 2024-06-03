@@ -1,4 +1,5 @@
 # [WIP] Extract Line Chart Data
+![Example Output](example/plextract.png)
 A repo that shows how to automatically extract the data of a line chart. Mainly a wrapper around [LineFormer](https://github.com/TheJaeLal/LineFormer) and [ChartDete](https://github.com/pengyu965/ChartDete/).
 
 ## Usage
