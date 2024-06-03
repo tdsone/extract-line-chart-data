@@ -45,7 +45,6 @@ meaning of array elements: x1, y1, x2, y2, confidence
 """
 
 
-
 """
 ocr.json 
 - Text extracted from each image
@@ -59,24 +58,46 @@ ocr.json
 """
 
 
-
-def sort_and_check_labels(label_coordinates: dict, img_key):
+def sort_and_check_labels(
+    label_coordinates: dict, axis_label_texts: dict, img_key: str
+):
     """
     This function makes sure that we can use the OCRed values by sorting them twice (value and position) and comparing.
 
     label_coordinates:
     {
-        
+        "x_title": [
+            [
+                441.2204284667969, 505.3034362792969, 584.9779663085938,
+                544.3689575195312, 0.9882757663726807
+            ],
+            ...
+        ],
+        "y_title": [
+            [
+                7.234010696411133, 196.8053741455078, 49.4166145324707, 313.7027893066406,
+                0.9896954298019409
+            ],
+            ...
+    ...
     }
 
-    img_key
+    axis_label_texts:
+    {
+        "/data/40482601-23c3-43f8-86fd-49517b9e2a3e/output/input2.jpeg/chartdete/cropped_xlabels_0.jpg": "0.3",
+        ...
+    }
+
+
     """
 
-    files = list(label_coordinates.keys())
+    label_img_paths = list(axis_label_texts.keys())
 
     ocr_values = {
-        f"{img_key.split('.')[0]}/{file}": float(ocr[f"{img_key.split('.')[0]}/{file}"])
-        for file in files
+        f"{img_key.split('.')[0]}/{file}": float(
+            axis_label_texts[f"{img_key.split('.')[0]}/{file}"]
+        )
+        for file in label_img_paths
         if "plot_area" not in file
     }
 
@@ -89,8 +110,8 @@ def sort_and_check_labels(label_coordinates: dict, img_key):
     def get_coord_key(label_key):
         return label_key.split("/")[1]
 
-    y_coords = {k: coordinates[get_coord_key(k)] for k, v in yvalues.items()}
-    x_coords = {k: coordinates[get_coord_key(k)] for k, v in xvalues.items()}
+    y_coords = {k: label_coordinates[get_coord_key(k)] for k, v in yvalues.items()}
+    x_coords = {k: label_coordinates[get_coord_key(k)] for k, v in xvalues.items()}
 
     # Sort the y and x coordinates
     sorted_y_coords = sorted(
@@ -249,20 +270,19 @@ def convert_data_points(conversions, img):
     plot_filename = f"converted_datapoints/{img.split('.')[0]}/plot.png"
     plt.savefig(plot_filename)
 
-def correct_coordinates(run_id, img_key):
-    
-    with open("coordinates.json", "r") as f:
-        coordinates = json.load(f)
 
-    with open("ocr.json", "r") as f:
-        ocr = json.load(f)
+def correct_coordinates(run_id: str, img: str):
 
-    imgs = list(coordinates.keys())
-    for figure_img in imgs:
-        try:
-            labels = sort_and_check_labels(figure_img)
-            conversions = calc_conversion(labels)
-            convert_data_points(conversions=conversions, img=figure_img)
-        except Exception as e:
-            print(f"converting {figure_img} did not work")
-            print(e)
+    with open(f"/data/{run_id}/output/{img}/chartdete/coordinates.json", "r") as f:
+        label_coordinates = json.load(f)
+
+    with open(f"/data/{run_id}/output/{img}/axis_label_texts.json", "r") as f:
+        axis_label_texts = json.load(f)
+
+    try:
+        labels = sort_and_check_labels(img)
+        conversions = calc_conversion(labels)
+        convert_data_points(conversions=conversions, img=img)
+    except Exception as e:
+        print(f"Correcting coordinates of {img} did not work!")
+        print(e)

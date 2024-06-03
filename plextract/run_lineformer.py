@@ -9,6 +9,7 @@ lineformer_image = base_cv_image.run_commands("pip install -e LineFormer")
 
 app = App("plextract-lineformer")
 
+
 @app.cls(
     gpu=gpu.A10G(),
     container_idle_timeout=240,
@@ -36,41 +37,40 @@ class LineFormer:
 
         infer.load_model(CONFIG, CKPT, DEVICE)
 
-        os.makedirs("/data/predictions", exist_ok=True)
-
-    def _inference(self, run_id: str) -> None:
+    def _inference(self, run_id: str, img: str) -> None:
         """Extracts data from line chart img.
         tuple[dict, str]:
             - dict: extracted data (keys are the individual data series)
             - str: path to img with the extracted data overlaying the img
 
-        Predictions are saved under /data/{run_id}/predictions/lineformer
+        Predictions are saved under /data/{run_id}/ouptut/{img}/lineformer
         """
         import cv2
         from lineformer import infer
         from lineformer import line_utils
         from pathlib import Path
-        
+        import json
+
         vol.reload()
 
-        predictions = []
+        BASE_INPUT = f"/data/{run_id}/input"
+        BASE_OUTPUT = f"/data/{run_id}/output"
 
-        os.makedirs(
-            os.path.join(f"/data/{run_id}/predictions", "lineformer"),
-            exist_ok=True,
-        )
+        print(f"files is in /data/{run_id}:", os.listdir(BASE_INPUT))
 
-        print(f"files is in /data/{run_id}:", os.listdir(f"/data/{run_id}"))
+        inputs = os.listdir(BASE_INPUT)
 
-        print(os.listdir(f"/data/{run_id}/predictions"))
+        img_paths = [os.path.join(Path(BASE_INPUT), Path(img)) for img in inputs]
 
-        inputs = os.listdir(f"/data/{run_id}/input")
+        for img in inputs:
+            os.makedirs(
+                f"{BASE_OUTPUT}/{img}/lineformer",
+                exist_ok=True,
+            )
 
-        img_paths = [os.path.join(Path(f"/data/{run_id}/input"), Path(img)) for img in inputs]
+        results_base_folders = [f"{BASE_OUTPUT}/{img}/lineformer" for img in inputs]
 
-        predictions = {path: {} for path in img_paths}
-
-        for img_path in img_paths:
+        for img_path, results_base_folder in zip(img_paths, results_base_folders):
             try:
 
                 img = cv2.imread(img_path)  # BGR format
@@ -84,26 +84,20 @@ class LineFormer:
 
                 # Construct the new path to save the image
                 new_img_path = os.path.join(
-                    Path(f"/data/{run_id}/predictions/lineformer"),
+                    results_base_folder,
                     Path(img_path.split("/")[-1]),
                 )
 
-                print("new img path", new_img_path)
+                cv2.imwrite(f"{results_base_folder}/prediction.png", img)
 
-                cv2.imwrite(new_img_path, img)
+                with open(f"{results_base_folder}/coordinates.json", "w") as f:
+                    json.dump(line_dataseries, f)
+
                 vol.commit()
 
-                predictions[new_img_path] = line_dataseries
             except Exception as e:
                 print(f"Failed to make prediction for {img_path}.")
                 print(e)
-
-        # Save predictions to file
-        import json
-
-        with open(f"/data/{run_id}/predictions/lineformer/coordinates.json", "w") as f:
-            json.dump(predictions, f)
-            vol.commit()
 
     @method()
     def inference(self, run_id: str):

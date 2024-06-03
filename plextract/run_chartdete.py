@@ -21,6 +21,7 @@ chardete_image = base_cv_image.run_commands(
 
 app = App("plextract-chartdete")
 
+
 @app.cls(
     image=chardete_image,
     timeout=3000,
@@ -62,16 +63,20 @@ class ChartDete:
 
         inputs = os.listdir(f"/data/{run_id}/input")
 
-        img_paths = [os.path.join(Path(f"/data/{run_id}/input"), Path(img)) for img in inputs]
+        img_paths = [
+            os.path.join(Path(f"/data/{run_id}/input"), Path(img)) for img in inputs
+        ]
 
-        results_base_folder = Path(f"/data/{run_id}/predictions/chartdete")
+        results_base_folders = [
+            Path(f"/data/{run_id}/output/{img}/chartdete") for img in inputs
+        ]
 
-        for img_path in img_paths:
+        for img_path, results_base_folder in zip(img_paths, results_base_folders):
             try:
 
                 predictions = inference_detector(self.model, img_path)
 
-                result_path = f"{results_base_folder}/{img_path.split('/')[-1]}"
+                result_path = f"{results_base_folder}/predictions.jpg"
 
                 print("result_path:", result_path)
 
@@ -107,12 +112,6 @@ class ChartDete:
                 for res, label in zip(predictions, labels):
                     results_labelled[label] = res.tolist()
 
-                # save coordinates to json
-                with open(f"/data/{run_id}/predictions/chartdete/coordinates.json", "w") as f:
-                    import json
-                    json.dump(results_labelled, f)
-                    vol.commit()
-
                 import cv2
                 import numpy as np
 
@@ -120,7 +119,7 @@ class ChartDete:
                 bounding_boxes = results_labelled
 
                 # Confidence threshold
-                confidence_threshold = 0.5
+                confidence_threshold = 0.9
 
                 # Load the image
                 image = cv2.imread(img_path)
@@ -128,6 +127,8 @@ class ChartDete:
                 if image is None:
                     print("Error loading image")
                     exit()
+
+                label_coordinates = {}
 
                 # Function to crop bounding boxes
                 def crop_bounding_boxes(image, boxes, threshold):
@@ -140,30 +141,44 @@ class ChartDete:
                     return cropped_images
 
                 # Crop bounding boxes from both 'x_title' and 'y_title'
-                cropped_x_title = crop_bounding_boxes(
+                cropped_x_labels = crop_bounding_boxes(
                     image, bounding_boxes["ylabel"], confidence_threshold
                 )
-                cropped_y_title = crop_bounding_boxes(
+                cropped_y_labels = crop_bounding_boxes(
                     image, bounding_boxes["xlabel"], confidence_threshold
                 )
 
+                print("=== Cropped images ===")
+                print(cropped_x_labels)
+                print("====")
+                print(cropped_y_labels)
+                print("======================")
+
                 # Save cropped images
-                for i, cropped_image in enumerate(cropped_x_title):
+                for i, cropped_image in enumerate(cropped_x_labels):
+                    path = os.path.join(
+                        results_base_folder, Path(f"cropped_xlabels_{i}.jpg")
+                    )
                     cv2.imwrite(
-                        os.path.join(
-                            results_base_folder, Path(f"cropped_xlabels_{i}.jpg")
-                        ),
+                        path,
                         cropped_image,
                     )
                     vol.commit()
 
-                for i, cropped_image in enumerate(cropped_y_title):
+                for i, cropped_image in enumerate(cropped_y_labels):
                     cv2.imwrite(
                         os.path.join(
                             results_base_folder, Path(f"cropped_ylabels_{i}.jpg")
                         ),
                         cropped_image,
                     )
+                    vol.commit()
+
+                # save coordinates to json
+                with open(f"{results_base_folder}/coordinates.json", "w") as f:
+                    import json
+
+                    json.dump(results_labelled, f)
                     vol.commit()
 
                 print("Cropping completed and images saved.")
