@@ -5,6 +5,7 @@ A repo that shows how to automatically extract the data of a line chart. Mainly 
 ## Installation
 1. You need a [modal.com](https://modal.com) account to run this repo out of the box. Sign up [here](https://modal.com/signup).
 2. Deploy the relevant functions by running: `chmod +x deploy.sh && ./deploy.sh`
+
 If you'd like to see a "modal-free" version of this, ping me.
 
 ## Usage
