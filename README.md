@@ -2,17 +2,17 @@
 ![Example Output](example/plextract.png)
 A repo that shows how to automatically extract the data of a line chart. Mainly a wrapper around [LineFormer](https://github.com/TheJaeLal/LineFormer) and [ChartDete](https://github.com/pengyu965/ChartDete/).
 
+## Installation
+1. You need a [modal.com](https://modal.com) account to run this repo out of the box. Sign up [here](https://modal.com/signup).
+2. Deploy the relevant functions by running: `chmod +x deploy.sh && ./deploy.sh`
+If you'd like to see a "modal-free" version of this, ping me.
+
 ## Usage
 All images in the folder `input` will be processed.
 1. Add your images to the `input` folder.
 2. Run the data extraction using: `modal run plextract/main.py`
 3. Download the processed files using `modal volume get plextract-vol <run_id>`. The run id is a uuid and can be found in the console log.
 
-### Requirements
-1. You need a [modal.com](https://modal.com) account to run this repo out of the box. Sign up [here](https://modal.com/signup).
-2. Deploy the relevant functions by running: `chmod +x deploy.sh && ./deploy.sh`
-
-If you'd like to see a "modal-free" version of this, ping me.
 
 ## How It Works
 The pipeline works as follows: 
