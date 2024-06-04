@@ -1,11 +1,15 @@
-from modal import Cls, Mount, Function
+from modal import Cls, Image, Mount
 
 from plextract.modal import vol, app
 from plextract.correct_coordinates import correct_coordinates
 
+image = Image.debian_slim().pip_install("scipy", "matplotlib")
+
 
 @app.function(
-    volumes={"/data": vol}, mounts=[Mount.from_local_dir("input", remote_path="/input")]
+    image=image,
+    volumes={"/data": vol},
+    mounts=[Mount.from_local_dir("input", remote_path="/input")],
 )
 def run_pipeline():
     import os
@@ -14,7 +18,7 @@ def run_pipeline():
 
     run_id = str(uuid.uuid4())
 
-    print(f"Processing run {run_id}...")
+    print(f"Processing run with run id: {run_id}...")
 
     BASE_INPUT = f"/data/{run_id}/input"
     BASE_OUTPUT = f"/data/{run_id}/output"
@@ -62,18 +66,14 @@ def run_pipeline():
         chartdete_dir = f"{BASE_OUTPUT}/{plot_img_dir}/chartdete"
 
         for label_img in os.listdir(chartdete_dir):
-            if "label" in label_img:
+            if "label" in label_img and ".json" not in label_img:
                 axis_label_images.append(f"{chartdete_dir}/{label_img}")
 
     OCRModel = Cls.lookup("plextract-ocr", "OCRModel")
 
-    print("len axis_label_images:", len(axis_label_images))
-
     label_texts = list(
         OCRModel().inference.map(axis_label_images, return_exceptions=True)
     )
-
-    print("Len label_texts:", len(label_texts))
 
     # Save ocrred values to file
     for img_dir in os.listdir(f"{BASE_OUTPUT}"):
@@ -97,6 +97,8 @@ def run_pipeline():
     print("Correcting coordinates...")
     for img in os.listdir(BASE_INPUT):
         correct_coordinates(run_id, img)
+
+    vol.commit()
 
     return chartdete_preds
 

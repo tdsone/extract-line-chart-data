@@ -18,6 +18,7 @@ with ocr_img.imports():
     import os
     from transformers import TrOCRProcessor, VisionEncoderDecoderModel
 
+
 @app.cls(
     image=ocr_img,
     volumes={"/data": vol},

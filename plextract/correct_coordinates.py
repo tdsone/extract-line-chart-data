@@ -87,18 +87,12 @@ def sort_and_check_labels(
         "/data/40482601-23c3-43f8-86fd-49517b9e2a3e/output/input2.jpeg/chartdete/cropped_xlabels_0.jpg": "0.3",
         ...
     }
-
-
     """
 
-    label_img_paths = list(axis_label_texts.keys())
+    print("\tNow starting to sort and check labels...")
 
     ocr_values = {
-        f"{img_key.split('.')[0]}/{file}": float(
-            axis_label_texts[f"{img_key.split('.')[0]}/{file}"]
-        )
-        for file in label_img_paths
-        if "plot_area" not in file
+        k: float(v) for k, v in axis_label_texts.items() if "plot_area" not in k
     }
 
     yvalues = {k: v for k, v in ocr_values.items() if "ylabel" in k}
@@ -107,12 +101,10 @@ def sort_and_check_labels(
     sorted_ylabels = sorted(yvalues.items(), key=lambda item: item[1])
     sorted_xlabels = sorted(xvalues.items(), key=lambda item: item[1])
 
-    def get_coord_key(label_key):
-        return label_key.split("/")[1]
+    y_coords = {k: label_coordinates[k] for k, v in yvalues.items()}
+    x_coords = {k: label_coordinates[k] for k, v in xvalues.items()}
 
-    y_coords = {k: label_coordinates[get_coord_key(k)] for k, v in yvalues.items()}
-    x_coords = {k: label_coordinates[get_coord_key(k)] for k, v in xvalues.items()}
-
+    print("Sorting coordinates...")
     # Sort the y and x coordinates
     sorted_y_coords = sorted(
         y_coords.items(), key=lambda item: item[1][1], reverse=True
@@ -141,6 +133,7 @@ def sort_and_check_labels(
 
 
 def calc_conversion(coord_val_map: dict):
+    print("Calculating conversions now...")
     """
      coord_val_map
      {
@@ -204,14 +197,15 @@ Conversions
 """
 
 
-def convert_data_points(conversions, img):
+def convert_data_points(conversions, run_id: str, img: str, label_coordinates: dict):
+    print("Convertign data points now...")
     # Load the coordinates and line series data
 
-    with open("line_series.json") as f:
+    with open(f"/data/{run_id}/output/{img}/lineformer/coordinates.json", "r") as f:
         all_lineseries = json.load(f)
 
     # Extract the plot area coordinates
-    plot_area_coords = coordinates[img]["plot_area_0.jpeg"][:4]
+    plot_area_coords = label_coordinates["plot_area"][:4]
     # plot area coords are x1, y1, x2, y2
 
     # Adjust origin to lower left corner (x1, y2)
@@ -230,7 +224,7 @@ def convert_data_points(conversions, img):
     converted_lineseries = {}
 
     # Loop over all line series
-    for series_index, lineseries in enumerate(all_lineseries[img]):
+    for series_index, lineseries in enumerate(all_lineseries):
 
         # Adjust the coordinates such that the line series is in relation to the lower left corner
         converted_points = [
@@ -244,8 +238,13 @@ def convert_data_points(conversions, img):
     # Save the converted line series to a JSON file
     import os
 
-    os.makedirs(f"converted_datapoints/{img.split('.')[0]}", exist_ok=True)
-    json_filename = f"converted_datapoints/{img.split('.')[0]}/data.json"
+    dest_folder = f"/data/{run_id}/output/{img}/converted_datapoints"
+
+    os.makedirs(
+        dest_folder,
+        exist_ok=True,
+    )
+    json_filename = f"{dest_folder}/data.json"
     with open(json_filename, "w") as json_file:
         json.dump(converted_lineseries, json_file, indent=4)
 
@@ -267,22 +266,36 @@ def convert_data_points(conversions, img):
     plt.legend()
 
     # Save the plot to a file
-    plot_filename = f"converted_datapoints/{img.split('.')[0]}/plot.png"
+    plot_filename = f"{dest_folder}/plot.png"
     plt.savefig(plot_filename)
 
 
 def correct_coordinates(run_id: str, img: str):
 
-    with open(f"/data/{run_id}/output/{img}/chartdete/coordinates.json", "r") as f:
+    print("\tCorrecting coordinates for:", run_id, img)
+
+    with open(
+        f"/data/{run_id}/output/{img}/chartdete/label_coordinates.json", "r"
+    ) as f:
         label_coordinates = json.load(f)
 
     with open(f"/data/{run_id}/output/{img}/axis_label_texts.json", "r") as f:
         axis_label_texts = json.load(f)
 
     try:
-        labels = sort_and_check_labels(img)
-        conversions = calc_conversion(labels)
-        convert_data_points(conversions=conversions, img=img)
+        coord_val_map = sort_and_check_labels(
+            label_coordinates=label_coordinates,
+            axis_label_texts=axis_label_texts,
+            img_key=img,
+        )
+
+        conversions = calc_conversion(coord_val_map)
+        convert_data_points(
+            conversions=conversions,
+            run_id=run_id,
+            img=img,
+            label_coordinates=label_coordinates,
+        )
     except Exception as e:
-        print(f"Correcting coordinates of {img} did not work!")
+        print(f"\tCorrecting coordinates of {img} did not work!")
         print(e)

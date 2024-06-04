@@ -78,8 +78,6 @@ class ChartDete:
 
                 result_path = f"{results_base_folder}/predictions.jpg"
 
-                print("result_path:", result_path)
-
                 self.model.show_result(
                     img_path,
                     predictions,
@@ -112,6 +110,13 @@ class ChartDete:
                 for res, label in zip(predictions, labels):
                     results_labelled[label] = res.tolist()
 
+                # save coordinates to json
+                with open(f"{results_base_folder}/bounding_boxes.json", "w") as f:
+                    import json
+
+                    json.dump(results_labelled, f)
+                    vol.commit()
+
                 import cv2
                 import numpy as np
 
@@ -130,6 +135,14 @@ class ChartDete:
 
                 label_coordinates = {}
 
+                plot_areas = sorted(
+                    bounding_boxes["plot_area"], key=lambda el: el[4], reverse=True
+                )
+
+                highest_conf_pa = plot_areas[0]
+
+                label_coordinates["plot_area"] = highest_conf_pa
+
                 # Function to crop bounding boxes
                 def crop_bounding_boxes(image, boxes, threshold):
                     cropped_images = []
@@ -142,17 +155,11 @@ class ChartDete:
 
                 # Crop bounding boxes from both 'x_title' and 'y_title'
                 cropped_x_labels = crop_bounding_boxes(
-                    image, bounding_boxes["ylabel"], confidence_threshold
-                )
-                cropped_y_labels = crop_bounding_boxes(
                     image, bounding_boxes["xlabel"], confidence_threshold
                 )
-
-                print("=== Cropped images ===")
-                print(cropped_x_labels)
-                print("====")
-                print(cropped_y_labels)
-                print("======================")
+                cropped_y_labels = crop_bounding_boxes(
+                    image, bounding_boxes["ylabel"], confidence_threshold
+                )
 
                 # Save cropped images
                 for i, cropped_image in enumerate(cropped_x_labels):
@@ -163,22 +170,23 @@ class ChartDete:
                         path,
                         cropped_image,
                     )
+
+                    label_coordinates[path] = bounding_boxes["xlabel"][i]
                     vol.commit()
 
                 for i, cropped_image in enumerate(cropped_y_labels):
+                    path = os.path.join(
+                        results_base_folder, Path(f"cropped_ylabels_{i}.jpg")
+                    )
                     cv2.imwrite(
-                        os.path.join(
-                            results_base_folder, Path(f"cropped_ylabels_{i}.jpg")
-                        ),
+                        path,
                         cropped_image,
                     )
+                    label_coordinates[path] = bounding_boxes["ylabel"][i]
                     vol.commit()
 
-                # save coordinates to json
-                with open(f"{results_base_folder}/coordinates.json", "w") as f:
-                    import json
-
-                    json.dump(results_labelled, f)
+                with open(f"{results_base_folder}/label_coordinates.json", "w") as f:
+                    json.dump(label_coordinates, f)
                     vol.commit()
 
                 print("Cropping completed and images saved.")
