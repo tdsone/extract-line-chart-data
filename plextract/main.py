@@ -1,4 +1,4 @@
-from modal import Cls, Mount
+from modal import Cls, Mount, Function
 
 from plextract.modal import vol, app
 from plextract.correct_coordinates import correct_coordinates
@@ -44,7 +44,11 @@ def run_pipeline():
     vol.reload()
 
     print("Extracting lines from images...")
-    LineFormer().inference.starmap([(run_id, img) for img in input_files])
+    tasks = [(run_id, img) for img in input_files]
+    lineformer_infer = LineFormer().inference
+    lineformer_preds = list(
+        lineformer_infer.starmap(input_iterator=tasks, return_exceptions=True)
+    )
     print("Detecting chart elements...")
     chartdete_preds = ChartDete().inference.remote(run_id)
 
