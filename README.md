@@ -14,7 +14,7 @@ All images in the folder `input` will be processed.
 2. Run the data extraction using: `modal run plextract/main.py`
 3. Download the processed files using `modal volume get plextract-vol <run_id>`. The run id is a uuid and can be found in the console log. For the example files, the result will look like this:
     ```
-    5ae01fae-0185-4167-b15f-c9be300229de/
+    <run_id>/
     ├── input
     │   ├── input1.jpeg
     │   ├── input2.jpeg
