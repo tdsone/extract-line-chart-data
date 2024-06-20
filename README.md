@@ -12,7 +12,40 @@ If you'd like to see a "modal-free" version of this, ping me.
 All images in the folder `input` will be processed.
 1. Add your images to the `input` folder.
 2. Run the data extraction using: `modal run plextract/main.py`
-3. Download the processed files using `modal volume get plextract-vol <run_id>`. The run id is a uuid and can be found in the console log.
+3. Download the processed files using `modal volume get plextract-vol <run_id>`. The run id is a uuid and can be found in the console log. For the example files, the result will look like this:
+    ```
+    5ae01fae-0185-4167-b15f-c9be300229de/
+    ├── input
+    │   ├── input1.jpeg
+    │   ├── input2.jpeg
+    │   └── input3.png
+    └── output
+        ├── input1.jpeg
+        │   ├── axis_label_texts.json # Text extracted from axis labels
+        │   ├── chartdete
+        │   │   ├── bounding_boxes.json
+        │   │   ├── cropped_xlabels_0.jpg # Cropped images of axis labels
+        │   │   ├── ...
+        │   │   ├── cropped_ylabels_0.jpg 
+        │   │   ├── ...
+        │   │   ├── label_coordinates.json # Coordinates of the detected elements
+        │   │   └── predictions.jpg # Image with bounding boxes of detected elements
+        │   ├── converted_datapoints
+        │   │   ├── data.json # The extracted data!
+        │   │   └── plot.png # The plot generated from the extracted data
+        │   └── lineformer
+        │       ├── coordinates.json # The image relative coordinates of the lines
+        │       └── prediction.png
+        ├── input2.jpeg
+        │   ├── ...
+        └── input3.png
+            ├── ...
+
+    14 directories, 60 files
+    ```
+4. The extracted data is provided as json: e.g. `<run_id>/output/input1.jpeg/converted_datapoints/data.json`.
+5. You can use [display_extracted_data.ipynb](display_extracted_data.ipynb) to plot the extracted data.
+
 
 
 ## How It Works
