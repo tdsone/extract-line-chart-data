@@ -1,8 +1,8 @@
 import os
-from plextract.modal import vol, base_cv_image
+import modal
 from typing import List, Dict, Tuple, Any
-
-from modal import Image, App, build, enter, gpu, method, Mount
+from modal import App, gpu, method
+from plextract.modal import vol, base_cv_image
 
 
 lineformer_image = base_cv_image.run_commands("pip install -e LineFormer")
@@ -11,25 +11,22 @@ app = App("plextract-lineformer")
 
 
 @app.cls(
-    gpu=gpu.A10G(),
+    gpu="any",
     container_idle_timeout=240,
     image=lineformer_image,
     volumes={"/data": vol},
 )
 class LineFormer:
-    @build()
-    def build(self):
-        from huggingface_hub import snapshot_download
-
+    @modal.enter()
+    def enter(self):
         import os
+        from huggingface_hub import snapshot_download
+        from lineformer import infer
 
         os.makedirs("huggingface")
 
         snapshot_download("tdsone/lineformer", local_dir="huggingface")
 
-    @enter()
-    def enter(self):
-        from lineformer import infer
 
         CKPT = "/root/huggingface/iter_3000.pth"
         CONFIG = "/root/huggingface/lineformer_swin_t_config.py"

@@ -1,15 +1,14 @@
-from modal import Cls, Image, Mount
+from modal import Cls, Image
 
 from plextract.modal import vol, app
 from plextract.correct_coordinates import correct_coordinates
 
-image = Image.debian_slim().pip_install("scipy", "matplotlib")
+image = Image.debian_slim().pip_install("scipy", "matplotlib").add_local_dir("input", remote_path="/input").add_local_python_source("plextract")
 
 
 @app.function(
     image=image,
-    volumes={"/data": vol},
-    mounts=[Mount.from_local_dir("input", remote_path="/input")],
+    volumes={"/data": vol}
 )
 def run_pipeline():
     import os
@@ -34,8 +33,8 @@ def run_pipeline():
         shutil.copy(os.path.join("/input", file_name), BASE_INPUT)
         vol.commit()
 
-    LineFormer = Cls.lookup("plextract-lineformer", "LineFormer")
-    ChartDete = Cls.lookup("plextract-chartdete", "ChartDete")
+    LineFormer = Cls.from_name("plextract-lineformer", "LineFormer")
+    ChartDete = Cls.from_name("plextract-chartdete", "ChartDete")
 
     print("Creating output folders...")
     for file in input_files:
@@ -51,7 +50,7 @@ def run_pipeline():
     tasks = [(run_id, img) for img in input_files]
     lineformer_infer = LineFormer().inference
     lineformer_preds = list(
-        lineformer_infer.starmap(input_iterator=tasks, return_exceptions=True)
+        lineformer_infer.starmap(input_iterator=tasks, return_exceptions=True, wrap_returned_exceptions=False)
     )
     print("Detecting chart elements...")
     chartdete_preds = ChartDete().inference.remote(run_id)
@@ -69,7 +68,7 @@ def run_pipeline():
             if "label" in label_img and ".json" not in label_img:
                 axis_label_images.append(f"{chartdete_dir}/{label_img}")
 
-    OCRModel = Cls.lookup("plextract-ocr", "OCRModel")
+    OCRModel = Cls.from_name("plextract-ocr", "OCRModel")
 
     label_texts = list(
         OCRModel().inference.map(axis_label_images, return_exceptions=True)

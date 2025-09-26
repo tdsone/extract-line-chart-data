@@ -11,7 +11,8 @@ If you struggle to set this up, don't hesitate to shoot me an email: mail@timons
 """
 
 from pathlib import Path
-from modal import enter, build, Mount, App, method
+import modal
+from modal import App, method
 
 from plextract.modal import base_cv_image, vol
 
@@ -30,20 +31,17 @@ app = App("plextract-chartdete")
 )
 class ChartDete:
 
-    @build()
+    @modal.enter()
     def build(self):
-        from huggingface_hub import snapshot_download
-
         import os
+        from huggingface_hub import snapshot_download
+        from mmdet.apis import init_detector
 
         os.makedirs("huggingface")
 
         snapshot_download("tdsone/chartdete", local_dir="huggingface")
 
-    @enter()
-    def enter(self):
         # predict bounding boxes for labels
-        from mmdet.apis import init_detector
 
         # Specify the path to model config and checkpoint file
         config_file = "/root/huggingface/cascade_rcnn_swin-t_fpn_LGF_VCE_PCE_coco_focalsmoothloss.py"

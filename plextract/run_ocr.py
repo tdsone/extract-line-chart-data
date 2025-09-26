@@ -2,14 +2,14 @@
 This script runs OCR using Microsofts trocr-base-handwritten on the axis label images.
 """
 
-from modal import App, Image, build, enter, method
+import modal
+from modal import method, App
 from pathlib import Path
-
 from plextract.modal import vol
 
 app = App("plextract-ocr")
 
-ocr_img = Image.debian_slim().pip_install("transformers", "pillow", "torch")
+ocr_img = modal.Image.debian_slim().pip_install("transformers", "pillow", "torch")
 
 with ocr_img.imports():
     from PIL import Image, ImageOps
@@ -25,11 +25,7 @@ with ocr_img.imports():
 )
 class OCRModel:
 
-    @build()
-    def build(self):
-        pass
-
-    @enter()
+    @modal.enter()
     def enter(self):
 
         self.processor = TrOCRProcessor.from_pretrained(
