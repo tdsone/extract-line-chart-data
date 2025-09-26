@@ -102,17 +102,6 @@ def run_pipeline():
 
     return chartdete_preds
 
-    # dir = Path("/tmp/stable-diffusion-xl")
-    # if not dir.exists():
-    #     dir.mkdir(exist_ok=True, parents=True)
-
-    # output_path = dir / "output.png"
-    # print(f"Saving it to {output_path}")
-    # with open(output_path, "wb") as f:
-    #     f.write(image_bytes)
-
-    pass
-
 
 @app.local_entrypoint()
 def main():
