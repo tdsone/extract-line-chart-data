@@ -14,13 +14,11 @@ from pathlib import Path
 import modal
 from modal import App, method
 
-from plextract.modal import base_cv_image, vol
+from .modal import base_cv_image, vol, app
 
 chardete_image = base_cv_image.run_commands(
     "git clone https://github.com/tdsone/ChartDete"
 ).run_commands("pip install -e ChartDete")
-
-app = App("plextract-chartdete")
 
 
 @app.cls(
@@ -30,7 +28,6 @@ app = App("plextract-chartdete")
     volumes={"/data": vol},
 )
 class ChartDete:
-
     @modal.enter()
     def build(self):
         import os
@@ -71,7 +68,6 @@ class ChartDete:
 
         for img_path, results_base_folder in zip(img_paths, results_base_folders):
             try:
-
                 predictions = inference_detector(self.model, img_path)
 
                 result_path = f"{results_base_folder}/predictions.jpg"

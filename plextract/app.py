@@ -1,15 +1,20 @@
 from modal import Cls, Image
 
-from plextract.modal import vol, app
-from plextract.correct_coordinates import correct_coordinates
+from .modal import vol, app
+from .correct_coordinates import correct_coordinates
 
-image = Image.debian_slim().pip_install("scipy", "matplotlib").add_local_dir("input", remote_path="/input").add_local_python_source("plextract")
+from .chartdete import ChartDete
+from .lineformer import LineFormer
+from .ocr import OCRModel
 
-
-@app.function(
-    image=image,
-    volumes={"/data": vol}
+image = (
+    Image.debian_slim()
+    .pip_install("scipy", "matplotlib")
+    .add_local_dir("input", remote_path="/input")
 )
+
+
+@app.function(image=image, volumes={"/data": vol})
 def run_pipeline():
     import os
     import shutil
@@ -33,9 +38,6 @@ def run_pipeline():
         shutil.copy(os.path.join("/input", file_name), BASE_INPUT)
         vol.commit()
 
-    LineFormer = Cls.from_name("plextract-lineformer", "LineFormer")
-    ChartDete = Cls.from_name("plextract-chartdete", "ChartDete")
-
     print("Creating output folders...")
     for file in input_files:
         file_dir = f"{BASE_OUTPUT}/{file}"
@@ -50,7 +52,9 @@ def run_pipeline():
     tasks = [(run_id, img) for img in input_files]
     lineformer_infer = LineFormer().inference
     lineformer_preds = list(
-        lineformer_infer.starmap(input_iterator=tasks, return_exceptions=True, wrap_returned_exceptions=False)
+        lineformer_infer.starmap(
+            input_iterator=tasks, return_exceptions=True, wrap_returned_exceptions=False
+        )
     )
     print("Detecting chart elements...")
     chartdete_preds = ChartDete().inference.remote(run_id)
@@ -67,8 +71,6 @@ def run_pipeline():
         for label_img in os.listdir(chartdete_dir):
             if "label" in label_img and ".json" not in label_img:
                 axis_label_images.append(f"{chartdete_dir}/{label_img}")
-
-    OCRModel = Cls.from_name("plextract-ocr", "OCRModel")
 
     label_texts = list(
         OCRModel().inference.map(axis_label_images, return_exceptions=True)

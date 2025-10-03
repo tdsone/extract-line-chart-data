@@ -2,17 +2,15 @@ import os
 import modal
 from typing import List, Dict, Tuple, Any
 from modal import App, gpu, method
-from plextract.modal import vol, base_cv_image
+from .modal import vol, base_cv_image, app
 
 
 lineformer_image = base_cv_image.run_commands("pip install -e LineFormer")
 
-app = App("plextract-lineformer")
-
 
 @app.cls(
     gpu="any",
-    container_idle_timeout=240,
+    scaledown_window=240,
     image=lineformer_image,
     volumes={"/data": vol},
 )
@@ -27,12 +25,13 @@ class LineFormer:
 
         snapshot_download("tdsone/lineformer", local_dir="huggingface")
 
-
         CKPT = "/root/huggingface/iter_3000.pth"
         CONFIG = "/root/huggingface/lineformer_swin_t_config.py"
         DEVICE = "cuda:0"
 
         infer.load_model(CONFIG, CKPT, DEVICE)
+
+        print("Successfully loaded LineFormer!")
 
     def _inference(self, run_id: str, img: str) -> None:
         """Extracts data from line chart img.

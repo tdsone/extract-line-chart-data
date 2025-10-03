@@ -5,9 +5,7 @@ This script runs OCR using Microsofts trocr-base-handwritten on the axis label i
 import modal
 from modal import method, App
 from pathlib import Path
-from plextract.modal import vol
-
-app = App("plextract-ocr")
+from .modal import vol, app
 
 ocr_img = modal.Image.debian_slim().pip_install("transformers", "pillow", "torch")
 
@@ -24,10 +22,8 @@ with ocr_img.imports():
     volumes={"/data": vol},
 )
 class OCRModel:
-
     @modal.enter()
     def enter(self):
-
         self.processor = TrOCRProcessor.from_pretrained(
             "microsoft/trocr-base-handwritten"
         )
@@ -38,7 +34,6 @@ class OCRModel:
 
     @method()
     def inference(self, path: Path):
-
         # Make sure the file to make the prediction on is there
         vol.reload()
 
