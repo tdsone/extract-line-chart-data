@@ -15,7 +15,7 @@ If you'd like to see a "modal-free" version of this, ping me.
 All images in the folder `input` will be processed.
 
 1. Add your images to the `input` folder.
-2. In the root folder, run the data extraction using: `modal run -m plextrac.app`
+2. In the root folder, run the data extraction using: `modal run -m plextract.app`
 3. Download the processed files using `modal volume get plextract-vol <run_id>`. The run id is a uuid and can be found in the console log. For the example files, the result will look like this:
 
    ```
