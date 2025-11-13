@@ -8,6 +8,7 @@ There's other solutions out there:
 - [PP-Chart2Table](https://huggingface.co/PaddlePaddle/PP-Chart2Table) (Huggingface) - haven't tried and would love to hear opinions!
 - [Graph2Table](https://graph2table.com/) - commercial SaaS, superior extraction that plextract but only 3 plots per day for free (as of 13.11.25)
 - [Deplot](https://huggingface.co/google/deplot) - didn't work well for me on the example plots
+- [Matcha ChartQA](https://huggingface.co/google/matcha-chartqa)
 - Mostly the mentioned models as [a collection on Huggingface](https://huggingface.co/collections/tdsone/plot-image-2-data)
 
 ## Installation
