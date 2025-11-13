@@ -3,6 +3,12 @@
 ![Example Output](example/plextract.png)
 A repo that shows how to automatically extract the data of a line chart. Mainly a wrapper around [LineFormer](https://github.com/TheJaeLal/LineFormer) and [ChartDete](https://github.com/pengyu965/ChartDete/).
 
+## Other Solutions
+There's other solutions out there:
+- [PP-Chart2Table](https://huggingface.co/PaddlePaddle/PP-Chart2Table) (Huggingface) - haven't tried and would love to hear opinions!
+- [Graph2Table](https://graph2table.com/) - commercial SaaS, superior extraction that plextract but only 3 plots per day for free (as of 13.11.25)
+- [Deplot](https://huggingface.co/google/deplot) - didn't work well for me on the example plots
+
 ## Installation
 
 1. You need a [modal.com](https://modal.com) account to run this repo out of the box. Sign up [here](https://modal.com/signup).
