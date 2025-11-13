@@ -1,0 +1,2 @@
+def stub(): 
+    print("hi")
