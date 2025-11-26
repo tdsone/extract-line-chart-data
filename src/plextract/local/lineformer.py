@@ -1,8 +1,8 @@
 import os
 
-class LineFormer:
 
-    def __init__(self): 
+class LineFormer:
+    def __init__(self):
         self.enter()
 
     def enter(self):

@@ -9,7 +9,7 @@ Create pix2val.json (stores, how many value units on a plot one pixel is worth)
 
 
 
-Inputs: 
+Inputs:
 - all axis labels coordinates for a figure
 - all corresponding texts
 """
@@ -165,7 +165,6 @@ def calc_conversion(coord_val_map: dict):
     from scipy.stats import linregress
 
     def get_best_fit(coord_map: dict, direction="x"):
-
         # Extract x coordinates and corresponding values
         points = [
             (v["coord"][0 if direction == "x" else 1], v["val"])
@@ -225,7 +224,6 @@ def convert_data_points(conversions, run_id: str, img: str, label_coordinates: d
 
     # Loop over all line series
     for series_index, lineseries in enumerate(all_lineseries):
-
         # Adjust the coordinates such that the line series is in relation to the lower left corner
         converted_points = [
             {"x": convertx(point["x"]), "y": converty(plot_area_height - point["y"])}
@@ -271,7 +269,6 @@ def convert_data_points(conversions, run_id: str, img: str, label_coordinates: d
 
 
 def correct_coordinates(run_id: str, img: str):
-
     print("\tCorrecting coordinates for:", run_id, img)
 
     with open(
