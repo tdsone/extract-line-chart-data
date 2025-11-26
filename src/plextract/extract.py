@@ -15,7 +15,7 @@ def extract(
         case "modal":
             logger.info(f"Running plextract remotely on modal for images in \n - {input_dir} \nand saving results to \n - {output_dir}.")
             import modal
-            from .modal import run_pipeline, vol
+            from .modal import run_pipeline, vol, download_volume_dir
 
             """
             We have to upload all images to a modal volume first for further processing.
@@ -38,7 +38,15 @@ def extract(
                         remote_output, 
                         run_id
                     )
-                logger.info("Done running the modal pipeline. Exiting.")
+                logger.info("\tDone running the modal pipeline.")
+                logger.info("Downloading files from modal volume...")
+
+
+                download_volume_dir(
+                    local_dir=output_dir, 
+                    remote_dir=remote_output
+                )
+                
         case _:
             raise Exception(
                 f'Unknown option {backend}. The only valid options are: "local", "modal"'
