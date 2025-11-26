@@ -5,7 +5,7 @@ This script runs OCR using Microsofts trocr-base-handwritten on the axis label i
 import modal
 from modal import method
 from pathlib import Path
-from .modal import vol, app
+from .modal import vol, modal_app as app
 
 ocr_img = modal.Image.debian_slim().pip_install("transformers", "pillow", "torch")
 

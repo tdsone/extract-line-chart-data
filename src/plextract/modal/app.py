@@ -1,42 +1,35 @@
-from modal import Cls, Image
+from modal import Image
 
-from .modal import vol, app
-from .correct_coordinates import correct_coordinates
+from .modal import vol, modal_app
+from ..utils import correct_coordinates
 
 from .chartdete import ChartDete
 from .lineformer import LineFormer
-from .ocr import OCRModel
+from .trocr import OCRModel
 
 image = (
     Image.debian_slim()
     .pip_install("scipy", "matplotlib")
-    .add_local_dir("input", remote_path="/input")
 )
 
 
-@app.function(image=image, volumes={"/data": vol})
-def run_pipeline():
+@modal_app.function(image=image, volumes={"/data": vol})
+def run_pipeline(input_dir, output_dir, run_id):
     import os
-    import shutil
-    import uuid
-
-    run_id = str(uuid.uuid4())
+    from ..utils import logger
 
     print(f"Processing run with run id: {run_id}...")
 
-    BASE_INPUT = f"/data/{run_id}/input"
-    BASE_OUTPUT = f"/data/{run_id}/output"
+    BASE_INPUT = f"/data/{input_dir}" 
+    BASE_OUTPUT = f"/data/{output_dir}"
 
-    # copy mounted input to volume
-    # (necessary as run id not known at build time)
-    os.makedirs(BASE_INPUT)
+    os.makedirs(BASE_OUTPUT)
+    vol.commit()
+    vol.reload()
 
-    print("Copying files from mount to vol...")
-    input_files = os.listdir("/input")
+    input_files = os.listdir(BASE_INPUT) # input_dir is a remote dir
 
-    for file_name in input_files:
-        shutil.copy(os.path.join("/input", file_name), BASE_INPUT)
-        vol.commit()
+    logger.debug(input_files)
 
     print("Creating output folders...")
     for file in input_files:
@@ -51,7 +44,7 @@ def run_pipeline():
     print("Extracting lines from images...")
     tasks = [(run_id, img) for img in input_files]
     lineformer_infer = LineFormer().inference
-    lineformer_preds = list(
+    _ = list(
         lineformer_infer.starmap(
             input_iterator=tasks, return_exceptions=True, wrap_returned_exceptions=False
         )
@@ -61,8 +54,6 @@ def run_pipeline():
 
     # OCR text from axis labels
     vol.reload()
-
-    from pathlib import Path
 
     axis_label_images = []
     for plot_img_dir in os.listdir(BASE_OUTPUT):
@@ -104,7 +95,7 @@ def run_pipeline():
     return chartdete_preds
 
 
-@app.local_entrypoint()
+@modal_app.local_entrypoint()
 def main():
     predictions = run_pipeline.remote()
 

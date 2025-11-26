@@ -2,7 +2,7 @@ import os
 import modal
 from typing import List, Dict, Tuple, Any
 from modal import App, gpu, method
-from .modal import vol, base_cv_image, app
+from .modal import vol, base_cv_image, modal_app as app
 
 
 lineformer_image = base_cv_image.run_commands("pip install -e LineFormer")

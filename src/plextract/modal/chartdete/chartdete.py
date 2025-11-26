@@ -10,11 +10,10 @@ Run this script using: modal run chartdete/main.py
 If you struggle to set this up, don't hesitate to shoot me an email: mail@timonschneider.de
 """
 
-from pathlib import Path
 import modal
-from modal import App, method
+from modal import method
 
-from .modal import base_cv_image, vol, app
+from ..modal import base_cv_image, vol, modal_app as app
 
 chardete_image = base_cv_image.run_commands(
     "git clone https://github.com/tdsone/ChartDete"

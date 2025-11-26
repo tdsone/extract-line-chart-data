@@ -1,6 +1,6 @@
 from modal import App, Volume, Image
 
-app = App("plextract")
+modal_app = App("plextract")
 
 vol = Volume.from_name("plextract-vol", create_if_missing=True)
 
