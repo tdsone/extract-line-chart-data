@@ -1,19 +1,44 @@
 [project]
 name = "plextract"
 version = "0.1.0"
-description = "Add your description here"
+description = "Extract data points from line chart images using ML"
 readme = "README.md"
 authors = [
     { name = "Timon Schneider", email = "mail@timonschneider.de" }
 ]
-requires-python = ">=3.12.0, <3.13"
+requires-python = ">=3.10,<3.11"
+# Base dependencies - minimal set for core utilities
 dependencies = [
-    "ipykernel>=7.1.0",
-    "matplotlib>=3.10.7",
+    "matplotlib>=3.10.0",
+    "scipy>=1.9.3",
+]
+
+[project.optional-dependencies]
+# For running the pipeline locally with ML models
+local = [
+    "torch==1.13.1",
+    "torchvision==0.14.1",
+    "numpy==1.23.5",
+    "transformers~=4.38.2",
+    "opencv-python>=4.0.0",
+    "huggingface_hub>=0.20.0",
+    "Pillow>=9.0.0",
+    "scikit-image>=0.19.0",
+    "bresenham>=0.2.0",
+    "tqdm>=4.65.0",
+    "chardet>=5.0.0",
+    "openmim>=0.3.9",
+    "tomli>=2.0.1",
+    "mmdet==2.28.2",
+    "lineformer @ git+https://github.com/tdsone/LineFormer.git",
+]
+# For running the pipeline on Modal (cloud)
+modal = [
     "modal>=1.2.4",
-    "requests>=2.32.5",
-    "torch>=2.9.1",
-    "transformers>=4.57.1",
+]
+# Install everything
+all = [
+    "plextract[local,modal]",
 ]
 
 [build-system]
@@ -23,4 +48,5 @@ build-backend = "uv_build"
 [dependency-groups]
 dev = [
     "ruff>=0.14.6",
+    "ipykernel>=7.1.0",
 ]

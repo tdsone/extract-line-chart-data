@@ -15,6 +15,7 @@ Inputs:
 """
 
 import json
+import os
 
 """
 coordinates.json
@@ -196,11 +197,11 @@ Conversions
 """
 
 
-def convert_data_points(conversions, run_id: str, img: str, label_coordinates: dict):
-    print("Convertign data points now...")
+def convert_data_points(conversions, base_output_dir: str, img: str, label_coordinates: dict):
+    print("Converting data points now...")
     # Load the coordinates and line series data
 
-    with open(f"/data/{run_id}/output/{img}/lineformer/coordinates.json", "r") as f:
+    with open(f"{base_output_dir}/{img}/lineformer/coordinates.json", "r") as f:
         all_lineseries = json.load(f)
 
     # Extract the plot area coordinates
@@ -234,9 +235,7 @@ def convert_data_points(conversions, run_id: str, img: str, label_coordinates: d
         converted_lineseries[f"series_{series_index}"] = converted_points
 
     # Save the converted line series to a JSON file
-    import os
-
-    dest_folder = f"/data/{run_id}/output/{img}/converted_datapoints"
+    dest_folder = f"{base_output_dir}/{img}/converted_datapoints"
 
     os.makedirs(
         dest_folder,
@@ -266,17 +265,27 @@ def convert_data_points(conversions, run_id: str, img: str, label_coordinates: d
     # Save the plot to a file
     plot_filename = f"{dest_folder}/plot.png"
     plt.savefig(plot_filename)
+    plt.close()
 
 
-def correct_coordinates(run_id: str, img: str):
-    print("\tCorrecting coordinates for:", run_id, img)
+def correct_coordinates(base_output_dir: str, img: str):
+    """
+    Correct pixel coordinates to actual data values.
+    
+    Args:
+        base_output_dir: Base output directory containing the image output folders.
+                        For local: this is the output_dir directly
+                        For modal: this is /data/{run_id}/output
+        img: Image filename
+    """
+    print("\tCorrecting coordinates for:", base_output_dir, img)
 
     with open(
-        f"/data/{run_id}/output/{img}/chartdete/label_coordinates.json", "r"
+        f"{base_output_dir}/{img}/chartdete/label_coordinates.json", "r"
     ) as f:
         label_coordinates = json.load(f)
 
-    with open(f"/data/{run_id}/output/{img}/axis_label_texts.json", "r") as f:
+    with open(f"{base_output_dir}/{img}/axis_label_texts.json", "r") as f:
         axis_label_texts = json.load(f)
 
     try:
@@ -289,7 +298,7 @@ def correct_coordinates(run_id: str, img: str):
         conversions = calc_conversion(coord_val_map)
         convert_data_points(
             conversions=conversions,
-            run_id=run_id,
+            base_output_dir=base_output_dir,
             img=img,
             label_coordinates=label_coordinates,
         )

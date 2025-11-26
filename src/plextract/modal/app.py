@@ -88,7 +88,7 @@ def run_pipeline(input_dir, output_dir, run_id):
 
     print("Correcting coordinates...")
     for img in os.listdir(BASE_INPUT):
-        correct_coordinates(run_id, img)
+        correct_coordinates(BASE_OUTPUT, img)
 
     vol.commit()
 

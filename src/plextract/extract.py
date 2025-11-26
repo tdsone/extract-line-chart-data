@@ -2,7 +2,27 @@ from typing import Literal
 import uuid
 
 from .utils import logger
-from .modal import modal_app
+
+
+def _check_local_deps():
+    """Check if local dependencies are installed."""
+    try:
+        import torch
+        import transformers
+        import cv2
+        return True
+    except ImportError:
+        return False
+
+
+def _check_modal_deps():
+    """Check if modal dependencies are installed."""
+    try:
+        import modal
+        return True
+    except ImportError:
+        return False
+
 
 def extract(
     input_dir: str = "input",
@@ -11,11 +31,23 @@ def extract(
 ):
     match backend:
         case "local":
+            if not _check_local_deps():
+                raise ImportError(
+                    "Local dependencies not installed. "
+                    "Install with: pip install plextract[local]"
+                )
             logger.info("Running plextract locally...")
+            from .local import run_pipeline
+            run_pipeline(input_dir, output_dir)
         case "modal":
+            if not _check_modal_deps():
+                raise ImportError(
+                    "Modal dependencies not installed. "
+                    "Install with: pip install plextract[modal]"
+                )
             logger.info(f"Running plextract remotely on modal for images in \n - {input_dir} \nand saving results to \n - {output_dir}.")
             import modal
-            from .modal import run_pipeline, vol, download_volume_dir
+            from .modal import run_pipeline, modal_app, vol, download_volume_dir
 
             """
             We have to upload all images to a modal volume first for further processing.
