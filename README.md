@@ -1,0 +1,1 @@
+# plextract: Extract data from line chart images
