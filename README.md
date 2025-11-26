@@ -1,6 +1,6 @@
 # Extract Line Chart Data
 
-![Example Output](example/plextract.png)
+![Example Output](assets/plextract.png)
 A repo that shows how to automatically extract the data of a line chart. Mainly a wrapper around [LineFormer](https://github.com/TheJaeLal/LineFormer) and [ChartDete](https://github.com/pengyu965/ChartDete/).
 
 ## Other Solutions
@@ -13,15 +13,78 @@ There's other solutions out there:
 
 ## Installation
 
-1. You need a [modal.com](https://modal.com) account to run this repo out of the box. Sign up [here](https://modal.com/signup).
-2. Deploy the relevant functions by running: `chmod +x deploy.sh && ./deploy.sh`
+### Base Installation
 
-If you'd like to see a "modal-free" version of this, ping me.
+```bash
+pip install plextract
+# or with uv
+uv pip install plextract
+```
+
+This installs only the core utilities. To actually run the pipeline, you need one of the extras below.
+
+### Option 1: Modal (Cloud) - Recommended
+
+Run the pipeline on [Modal's](https://modal.com) cloud infrastructure. No GPU required locally.
+
+```bash
+pip install plextract[modal]
+# or with uv
+uv pip install plextract[modal]
+```
+
+You'll also need a [modal.com](https://modal.com) account. Sign up [here](https://modal.com/signup).
+
+### Option 2: Local Execution
+
+Run the pipeline locally with ML models. Requires a GPU with CUDA support.
+
+```bash
+pip install plextract[local]
+# or with uv
+uv pip install plextract[local]
+```
+
+**Additional setup for local execution:**
+The ChartDete + LineFormer stack requires `mmcv-full` and a custom fork of `mmdet`.
+
+```bash
+# from the repo root (after creating/activating your Python 3.10 env)
+uv pip install -e ".[local]"
+bash setup_local_env.sh
+```
+
+`setup_local_env.sh` will:
+
+- install `mmcv-full` via `mim install mmcv-full`
+- clone ChartDete into `third_party/ChartDete`
+- install the ChartDete `mmdet` fork (`pip install --no-build-isolation -e third_party/ChartDete`)
+
+### Install Everything
+
+```bash
+pip install plextract[all]
+```
 
 ## Usage
 
-All images in the folder `input` will be processed.
+All images in the folder `input` will be processed and results saved to `output`.
 
+### Python API
+
+```python
+from plextract import extract
+
+# Run locally (requires plextract[local])
+extract(input_dir="input", output_dir="output", backend="local")
+
+# Or run on Modal cloud (requires plextract[modal])
+extract(input_dir="input", output_dir="output", backend="modal")
+```
+
+### CLI / Manual
+
+**With Modal:**
 1. Add your images to the `input` folder.
 2. In the root folder, run the data extraction using: `modal run -m plextract.app`
 3. Download the processed files using `modal volume get plextract-vol <run_id>`. The run id is a uuid and can be found in the console log. For the example files, the result will look like this:
