@@ -46,13 +46,19 @@ uv pip install plextract[local]
 ```
 
 **Additional setup for local execution:**
-The ChartDete model requires `mmdet` (MMDetection) which needs manual installation:
+The ChartDete + LineFormer stack requires `mmcv-full` and a custom fork of `mmdet`.
 
 ```bash
-pip install openmim
-mim install mmcv-full
-pip install mmdet
+# from the repo root (after creating/activating your Python 3.10 env)
+uv pip install -e ".[local]"
+bash setup_local_env.sh
 ```
+
+`setup_local_env.sh` will:
+
+- install `mmcv-full` via `mim install mmcv-full`
+- clone ChartDete into `third_party/ChartDete`
+- install the ChartDete `mmdet` fork (`pip install --no-build-isolation -e third_party/ChartDete`)
 
 ### Install Everything
 
