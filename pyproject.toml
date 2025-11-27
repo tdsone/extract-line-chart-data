@@ -1,6 +1,6 @@
 [project]
 name = "plextract"
-version = "0.1.0"
+version = "0.1"
 description = "Extract data points from line chart images using ML"
 readme = "README.md"
 authors = [
