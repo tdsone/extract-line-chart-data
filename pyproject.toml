@@ -10,6 +10,7 @@ requires-python = ">=3.10,<3.11"
 # Base dependencies - minimal set for core utilities
 dependencies = [
     "matplotlib>=3.10.0",
+    "pytest>=9.0.1",
     "scipy>=1.9.3",
 ]
 
