@@ -1,21 +1,14 @@
 import json
-import sys
-from importlib import import_module
-from pathlib import Path
 
 import matplotlib
 import pytest
-
-# Ensure src is on path for direct test execution
-PROJECT_ROOT = Path(__file__).resolve().parents[2]
-sys.path.append(str(PROJECT_ROOT / "src"))
-
-cc = import_module("plextract.utils.correct_coordinates")
 
 matplotlib.use("Agg")
 
 
 def test_sort_and_check_labels_returns_sorted_mapping():
+    from plextract.utils.correct_coordinates import sort_and_check_labels
+
     label_coordinates = {
         "sample/xlabel_0.jpeg": [10.0, 50.0, 15.0, 55.0, 0.9],
         "sample/xlabel_1.jpeg": [30.0, 50.0, 35.0, 55.0, 0.9],
@@ -29,7 +22,7 @@ def test_sort_and_check_labels_returns_sorted_mapping():
         "sample/ylabel_1.jpeg": "10",
     }
 
-    result = cc.sort_and_check_labels(
+    result = sort_and_check_labels(
         label_coordinates=label_coordinates,
         axis_label_texts=axis_label_texts,
         img_key="sample_image",
@@ -48,6 +41,8 @@ def test_sort_and_check_labels_returns_sorted_mapping():
 
 
 def test_calc_conversion_returns_linear_relationship():
+    from plextract.utils.correct_coordinates import calc_conversion
+
     coord_val_map = {
         "xs": {
             "sample/xlabel_0.jpeg": {
@@ -71,7 +66,7 @@ def test_calc_conversion_returns_linear_relationship():
         },
     }
 
-    conversions = cc.calc_conversion(coord_val_map)
+    conversions = calc_conversion(coord_val_map)
 
     assert conversions["x"]["slope"] == pytest.approx(0.25)
     assert conversions["x"]["intercept"] == pytest.approx(-2.5)
@@ -80,6 +75,8 @@ def test_calc_conversion_returns_linear_relationship():
 
 
 def test_convert_data_points_writes_converted_series(tmp_path):
+    from plextract.utils.correct_coordinates import convert_data_points
+
     base_dir = tmp_path / "output"
     img_name = "figure"
     lineformer_dir = base_dir / img_name / "lineformer"
@@ -98,7 +95,7 @@ def test_convert_data_points_writes_converted_series(tmp_path):
         "y": {"slope": 1.0, "intercept": 0.0},
     }
 
-    cc.convert_data_points(
+    convert_data_points(
         conversions=conversions,
         base_output_dir=str(base_dir),
         img=img_name,
