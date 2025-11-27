@@ -13,58 +13,39 @@ There's other solutions out there:
 
 ## Installation
 
-### Base Installation
+⚠️ **No PyPI package exists yet.**  
+Clone the repository and follow the steps below for either Modal or local execution.
+
+### Modal (cloud, recommended)
 
 ```bash
-pip install plextract
-# or with uv
-uv pip install plextract
+git clone https://github.com/tdsone/extract-line-chart-data.git
+cd extract-line-chart-data
+
+# install the modal extra locally
+uv pip install -e ".[modal]"
 ```
 
-This installs only the core utilities. To actually run the pipeline, you need one of the extras below.
+You need a [modal.com](https://modal.com/signup) account and the Modal CLI configured.
 
-### Option 1: Modal (Cloud) - Recommended
-
-Run the pipeline on [Modal's](https://modal.com) cloud infrastructure. No GPU required locally.
+### Local execution (GPU required)
 
 ```bash
-pip install plextract[modal]
-# or with uv
-uv pip install plextract[modal]
-```
+git clone https://github.com/tdsone/extract-line-chart-data.git
+cd extract-line-chart-data
 
-You'll also need a [modal.com](https://modal.com) account. Sign up [here](https://modal.com/signup).
+# create / activate a Python 3.10 virtualenv (example with uv)
+uv venv --python 3.10
+source .venv/bin/activate
 
-### Option 2: Local Execution
-
-Run the pipeline locally with ML models. Requires a GPU with CUDA support.
-
-```bash
-pip install plextract[local]
-# or with uv
-uv pip install plextract[local]
-```
-
-**Additional setup for local execution:**
-The ChartDete + LineFormer stack requires `mmcv-full` and a custom fork of `mmdet`.
-
-```bash
-# from the repo root (after creating/activating your Python 3.10 env)
+# install project dependencies
 uv pip install -e ".[local]"
+
+# pull third-party models (mmcv-full + custom ChartDete fork)
 bash setup_local_env.sh
 ```
 
-`setup_local_env.sh` will:
-
-- install `mmcv-full` via `mim install mmcv-full`
-- clone ChartDete into `third_party/ChartDete`
-- install the ChartDete `mmdet` fork (`pip install --no-build-isolation -e third_party/ChartDete`)
-
-### Install Everything
-
-```bash
-pip install plextract[all]
-```
+`setup_local_env.sh` runs `mim install mmcv-full`, clones ChartDete into `third_party/ChartDete`, and installs its `mmdet` fork with `pip install --no-build-isolation -e`.
 
 ## Usage
 
@@ -82,46 +63,40 @@ extract(input_dir="input", output_dir="output", backend="local")
 extract(input_dir="input", output_dir="output", backend="modal")
 ```
 
-### CLI / Manual
+### Input/Output Folder Structure
 
 **With Modal:**
-1. Add your images to the `input` folder.
-2. In the root folder, run the data extraction using: `modal run -m plextract.app`
-3. Download the processed files using `modal volume get plextract-vol <run_id>`. The run id is a uuid and can be found in the console log. For the example files, the result will look like this:
 
-   ```
-   <run_id>/
-   ├── input
-   │   ├── input1.jpeg
-   │   ├── input2.jpeg
-   │   └── input3.png
-   └── output
-       ├── input1.jpeg
-       │   ├── axis_label_texts.json # Text extracted from axis labels
-       │   ├── chartdete
-       │   │   ├── bounding_boxes.json
-       │   │   ├── cropped_xlabels_0.jpg # Cropped images of axis labels
-       │   │   ├── ...
-       │   │   ├── cropped_ylabels_0.jpg
-       │   │   ├── ...
-       │   │   ├── label_coordinates.json # Coordinates of the detected elements
-       │   │   └── predictions.jpg # Image with bounding boxes of detected elements
-       │   ├── converted_datapoints
-       │   │   ├── data.json # The extracted data!
-       │   │   └── plot.png # The plot generated from the extracted data
-       │   └── lineformer
-       │       ├── coordinates.json # The image relative coordinates of the lines
-       │       └── prediction.png
-       ├── input2.jpeg
-       │   ├── ...
-       └── input3.png
-           ├── ...
+```
+<run_id>/
+├── input
+│   ├── input1.jpeg
+│   ├── input2.jpeg
+│   └── input3.png
+└── output
+    ├── input1.jpeg
+    │   ├── axis_label_texts.json # Text extracted from axis labels
+    │   ├── chartdete
+    │   │   ├── bounding_boxes.json
+    │   │   ├── cropped_xlabels_0.jpg # Cropped images of axis labels
+    │   │   ├── ...
+    │   │   ├── cropped_ylabels_0.jpg
+    │   │   ├── ...
+    │   │   ├── label_coordinates.json # Coordinates of the detected elements
+    │   │   └── predictions.jpg # Image with bounding boxes of detected elements
+    │   ├── converted_datapoints
+    │   │   ├── data.json # The extracted data!
+    │   │   └── plot.png # The plot generated from the extracted data
+    │   └── lineformer
+    │       ├── coordinates.json # The image relative coordinates of the lines
+    │       └── prediction.png
+    ├── input2.jpeg
+    │   ├── ...
+    └── input3.png
+        ├── ...
 
-   14 directories, 60 files
-   ```
-
-4. The extracted data is provided as json: e.g. `<run_id>/output/input1.jpeg/converted_datapoints/data.json`.
-5. You can use [display_extracted_data.ipynb](display_extracted_data.ipynb) to plot the extracted data.
+14 directories, 60 files
+```
 
 ## How It Works
 
@@ -138,12 +113,12 @@ The pipeline works as follows:
 
 ### Input
 
-![Example Input](example/input.png)
+![Example Input](examples/input/input2.png)
 
 ### Output
 
-This chart was generated using matplotlib using the extracted data (`example/data.json`)
-![Example Output](example/output.png)
+This chart was generated using matplotlib using the extracted data (`examples/input2.png/data.json`)
+![Example Output](examples/output/input2.png/converted_datapoints/plot.png)
 
 ## Resources
 
